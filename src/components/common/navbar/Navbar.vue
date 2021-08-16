@@ -17,11 +17,11 @@ export default {
     height: 44px;
     line-height: 44px;
     display: flex;
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    z-index: 10;
+    // position: fixed;
+    // left: 0;
+    // right: 0;
+    // top: 0;
+    // z-index: 10;
     background: var(--color-tint);
     .left, .right{
       width: 60px;

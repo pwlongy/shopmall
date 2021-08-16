@@ -1,6 +1,6 @@
 <template>
-  <div class="goodlistitem">
-    <img :src="GoodsItem.show.img"/>
+  <div class="goodlistitem" @click="routeDetail">
+    <img :src="showImage" @load ="imgLoad"/>
     <div>
       <p v-text="GoodsItem.title"></p>
       ￥<span v-text="GoodsItem.price"></span>
@@ -19,6 +19,28 @@ export default {
       }
     }
   },
+  methods: {
+    // 当图片加载完成执行事件
+    imgLoad(){
+      // 添加事件总线
+      // 发送事件
+      // if(this.$route.path.indexOf("/home")){
+      //   this.$bus.$emit("itemImageLoad")
+      // }else if(this.$route.path.indexOf("/detail")){
+      //   this.$bus.$emit("DetailItemImageLoad")
+      // }
+         this.$bus.$emit("itemImageLoad")
+    },
+    // 跳转详情页
+    routeDetail(){
+      this.$router.push("/detail/"+this.GoodsItem.iid)
+    }
+  },
+  computed: {
+    showImage(){
+      return  this.GoodsItem.image || this.GoodsItem.show.img
+    }
+  }
 }
 </script>
 

@@ -4,15 +4,28 @@
     <NavBar>
       <div slot="center">首页</div>
     </NavBar>
+    <tabControl
+        :title="['流行','新款','精选']"
+        class="tabc"
+        @handItem="changeItemList"
+        ref="tabControl1"
+        v-show="isFiedx">
+      </tabControl>
 
-    <Scroll class="content" :probeType="3" ref="scroll" @positionTop="handlPosition">
+    <Scroll
+      class="content"
+      :probeType="3"
+      :pullUpLoad="true"
+      ref="scroll"
+      @positionTop="handlPosition"
+      @pullingUp= "UpdataPullingUp">
       <!-- 轮播图 -->
       <van-swipe
         class="my-swipe"
         :autoplay="3000"
         indicator-color="white">
         <van-swipe-item v-for="(item,index) in banner" :key="index">
-          <a :href="item.link"><img :src="item.image"/></a>
+          <a :href="item.link"><img :src="item.image" @load="swipeImage"/></a>
         </van-swipe-item>
       </van-swipe>
 
@@ -25,7 +38,9 @@
       <tabControl
         :title="['流行','新款','精选']"
         class="tabc"
-        @handItem="changeItemList">
+        @handItem="changeItemList"
+        ref="tabControl2"
+        v-show="!isFiedx">
       </tabControl>
 
       <!-- 列表 -->
@@ -41,17 +56,19 @@
 <script>
 import {getHomeMultidata, getHomeGoods} from "utils/home.js"
 
+import {itemListerMinxin} from "common/mixin.js"
+
 import {
   Swipe,
   SwipeItem
 } from "vant"
 
-const TabControl = () => import("components/content/tabControl/TabControl.vue")
+import TabControl from "components/content/tabControl/TabControl.vue"
 const goodList = () => import("components/content/goodsList/GoodList.vue")
 const backTop = () => import("components/content/backTop/BackTop.vue")
 
 const NavBar = () => import("components/common/navbar/Navbar.vue")
-const Scroll = () => import("components/common/scroll/Scroll.vue")
+import Scroll from "components/common/scroll/Scroll.vue"
 
 const recommens = () => import('./childcomponents/recommensView.vue')
 const feature = () => import('./childcomponents/featureView.vue')
@@ -69,6 +86,7 @@ export default {
     [Swipe.name]: Swipe,
     [SwipeItem.name]: SwipeItem
   },
+  mixins: [itemListerMinxin],
   methods: {
     // 获取首页轮播图数据
     getMultidata(){
@@ -83,9 +101,11 @@ export default {
       getHomeGoods(type,page).then(res => {
         this.goods[type].list.push(...res.data.data.list)
         this.goods[type].page++
+
+        this.$refs.scroll.scroll.finishPullUp()
+
       })
     },
-
     // 改变列表数据
     changeItemList(index){
       switch (index){
@@ -99,7 +119,8 @@ export default {
           this.currentType = "sell"
           break;
       }
-
+      this.$refs.tabControl1.currentIndex = index
+      this.$refs.tabControl2.currentIndex = index
     },
 
     // 返回最顶部
@@ -109,7 +130,37 @@ export default {
 
     // 控制是否显示回到最顶部
     handlPosition(position){
+      // 控制回到最顶部的显示与隐藏
       this.isShow = -(position.y) > 600
+
+      // 控制导航栏的显示与隐藏
+      this.isFiedx = (-position.y) > this.navOffsetTop
+
+    },
+
+    // 下拉刷新更新数据
+    UpdataPullingUp(){
+      this.getGoods(this.currentType)
+    },
+
+    // 事件防抖
+    // debounce(func,delay){
+    //   let myTime = null
+    //   return function(...args) {
+    //     if(myTime !== null) clearTimeout(myTime)
+    //       myTime = setTimeout( ()=>{
+    //         console.log('----')
+    //         func.apply(this,args)
+    //     }, delay)
+    //   }
+    // }
+
+    // 轮播图图片加载
+    swipeImage(){
+      if(!this.loadSwiper){
+        this.navOffsetTop = this.$refs.tabControl2.$el.offsetTop-this.$refs.tabControl2.$el.offsetHeight
+        this.loadSwiper = true
+      }
     }
   },
   data(){
@@ -134,6 +185,16 @@ export default {
       currentType: 'pop',
       // 显示回到最顶部
       isShow: false,
+      // 导航吸顶
+      isFiedx: false,
+      // 轮播图图片是否加载
+      loadSwiper: false,
+      // 导航 offsetTop
+      navOffsetTop: 0,
+      // 事件监听总线的方法
+      // itemImageLoad: null,
+      // // 定时器
+      // mytime: null
     }
   },
   created () {
@@ -142,17 +203,43 @@ export default {
     this.getGoods("pop")
     this.getGoods("new")
     this.getGoods("sell")
-    console.log(this.goods["pop"])
-  }
+  },
+  deactivated () {
+    // 没有选中时取消监听事件总线
+    this.$bus.$off("itemImageLoad", this.itemImageLoad)
+
+  },
+  mounted () {
+
+    // let refresh = this.debounce(this.$refs.scroll.scroll.refresh,100)
+
+    // 图片加载完成事件监听
+    // this.itemImageLoad = () =>{
+    //   // 执行防抖事件
+    //   if(this.mytime) clearTimeout(this.mytime)
+    //   this.mytime = setTimeout(() =>{
+    //     this.$refs.scroll.scroll.refresh()
+    //     console.log(1)
+    //   },200)
+
+    //     // refresh()
+    // }
+    // this.$bus.$on("itemImageLoad", this.itemImageLoad)
+
+    // 获取tabControl距离顶部距离
+    // 所有组件都有一个属性 $el, 用于获取组件中的元素
+  },
 }
 </script>
 
 <style lang="scss" scoped>
   .home{
-    padding-top: 44px;
+    // padding-top: 44px;
     height: 100%;
     .content{
        height: calc(100% - 44px);
+       overflow: hidden;
+       padding-bottom: 44px;
     }
     .my-swipe .van-swipe-item {
       height: 185px;
@@ -169,10 +256,10 @@ export default {
 
     }
 
-    .tabc{
-      position: sticky;
-      top: 44px;
-      background: #fff;
-    }
+    // .tabc{
+    //   position: sticky;
+    //   top: 44px;
+    //   background: #fff;
+    // }
   }
 </style>
