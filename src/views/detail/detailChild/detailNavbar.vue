@@ -32,6 +32,7 @@ export default {
   methods: {
     spanClick(index){
       this.currentIndex = index
+      this.$emit("spanClick", index)
     },
     // f返回上一次路由
     back(){

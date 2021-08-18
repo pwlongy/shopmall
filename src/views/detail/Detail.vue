@@ -1,10 +1,10 @@
 <template>
   <div class="detail">
     <!-- 头部导航 -->
-    <detailNavbar class="navbar"></detailNavbar>
+    <detailNavbar class="navbar" @spanClick="spanClick" ref="navbar"></detailNavbar>
 
     <!-- 轮播图 -->
-    <Scroll ref="scroll" class="scroll">
+    <Scroll ref="scroll" class="scroll" :probeType="3" @positionTop="positionTop">
       <van-swipe
         class="my-swipe"
         :autoplay="3000"
@@ -22,13 +22,16 @@
       <!-- 商品描述 -->
       <detaildescription :detailInfo="detailInfo" @loadImg="LoadImg"></detaildescription>
       <!-- 商品详情 -->
-      <detail :itemParams= "itemParams"></detail>
+      <detail :itemParams= "itemParams" ref="params"></detail>
       <!-- 用户评价 -->
-      <detailCommon :commonInfo="commonInfo"></detailCommon>
+      <detailCommon :commonInfo="commonInfo" ref="common"></detailCommon>
       <!-- 推荐 -->
-      <list :list="recommend"></list>
+      <list :list="recommend" ref="recom"></list>
     </Scroll>
-
+    <!-- 返回顶部 -->
+    <BackTop class="backTop" v-if="showBackTop" @click.native="backTop"></BackTop>
+    <!-- 添加购物车 -->
+    <detailBottomBar @addCar="addCar"></detailBottomBar>
   </div>
 </template>
 
@@ -37,14 +40,17 @@ import {getDetail, Goods, Shop, GoodsParams, getRecommend} from "utils/detail.js
 
 import {itemListerMinxin} from "common/mixin.js"
 
-const detailNavbar = () => import("./detailChild/detailNavbar.vue")
+import detailNavbar from "./detailChild/detailNavbar.vue"
 const detailInfo = () => import("./detailChild/detailInfo.vue")
 const detailShop = () => import("./detailChild/detailShop.vue")
-const detaildescription = () => import('./detailChild/detailDescription.vue')
-const detail = () => import("./detailChild/detail.vue")
-const detailCommon = () => import("./detailChild/detailCommon.vue")
+import detailBottomBar from "./detailChild/detailBottomBar.vue"
+import detaildescription from './detailChild/detailDescription.vue'
+import detail from "./detailChild/detail.vue"
+import detailCommon from "./detailChild/detailCommon.vue"
+import list from "components/content/goodsList/GoodList.vue"
+import BackTop from "components/content/backTop/BackTop.vue"
 
-const list = () => import("components/content/goodsList/GoodList.vue")
+import {mapActions} from "vuex"
 
 import Scroll from "components/common/scroll/Scroll.vue"
 import {
@@ -74,7 +80,14 @@ export default {
      // 事件监听总线的方法
     //  itemImageLoad: null,
     //  // 定时器
-    //  myTime: null
+    //  myTime: null,
+
+    // 绑定top值
+    themeTopYs: [],
+    // this.$refs.navbar.currentIndex = 0
+    // navbar 选中的数值
+    currentIndex: 0,
+    showBackTop: false
     }
   },
   mounted () {
@@ -104,6 +117,26 @@ export default {
       this.recommend = res.data.data.list
     })
 
+    // 获取高度
+
+    // 数据未完全加载完成
+    // this.themeTopYs = []
+    // this.themeTopYs.push(0)
+    // this.themeTopYs.push(this.$refs.params.$el.offsetTop)
+    // this.themeTopYs.push(this.$refs.common.$el.offsetTop)
+    // this.themeTopYs.push(this.$refs.recom.$el.offsetTop)
+    // console.log(this.themeTopYs)
+
+    // 这个方法是等数据完全加载完成在执行回调函数
+    // this.$nextTick(() =>{
+    //   this.themeTopYs = []
+    //   this.themeTopYs.push(0)
+    //   this.themeTopYs.push(this.$refs.params.$el.offsetTop)
+    //   this.themeTopYs.push(this.$refs.common.$el.offsetTop)
+    //   this.themeTopYs.push(this.$refs.recom.$el.offsetTop)
+    //   console.log(this.themeTopYs)
+    // })
+
     // 推荐图片刷新轮播图
     // this.itemImageLoad = () => {
     //   if(this.myTime) clearTimeout(this.myTime)
@@ -123,7 +156,73 @@ export default {
     // 等待图片刷新
     LoadImg() {
       this.$refs.scroll.scroll.refresh()
-    }
+
+      this.themeTopYs = []
+      this.themeTopYs.push(0)
+      this.themeTopYs.push(this.$refs.params.$el.offsetTop)
+      this.themeTopYs.push(this.$refs.common.$el.offsetTop)
+      this.themeTopYs.push(this.$refs.recom.$el.offsetTop)
+      console.log(this.themeTopYs)
+    },
+
+    // 标题点击跳转
+    spanClick(index){
+      this.$refs.scroll.scroll.scrollTo(0,-this.themeTopYs[index],300)
+    },
+
+    // 获取滚动高度事件
+    positionTop(position){
+      let y = -position.y
+      // console.log(y)
+      // if(y < this.themeTopYs[1]){
+      //   this.$refs.navbar.currentIndex = 0
+      //   console.log(1)
+      // }else if(y < this.themeTopYs[2]){
+      //   this.$refs.navbar.currentIndex = 1
+      //   console.log(2)
+      // }else if(y < this.themeTopYs[3]){
+      //   this.$refs.navbar.currentIndex = 2
+      //   console.log(3)
+      // }else if(y > this.themeTopYs[3]){
+      //   this.$refs.navbar.currentIndex = 3
+      //   console.log(4)
+      // // }
+      // console.log(position)
+      const length = this.themeTopYs.length
+      // console.log(length)
+      for(let i = 0 ; i < length; i++){
+        if(this.currentIndex !== i && ((i < length-1 && y >= this.themeTopYs[i] && y < this.themeTopYs[i+1]) || (i === length - 1 && y > this.themeTopYs[i]))){
+          this.currentIndex = i
+          this.$refs.navbar.currentIndex = this.currentIndex
+        }
+      }
+
+
+      // 返回最顶部
+        this.showBackTop = y > 1000
+
+
+
+    },
+    // 返回最顶部
+    backTop(){
+      this.$refs.scroll.scroll.scrollTo(0,0,500)
+    },
+    // 添加购物车
+    addCar(){
+      let product = {}
+      product.image = this.TopImage[0]
+      product.title = this.goods.title
+      product.desc = this.goods.desc
+      product.price = this.goods.realPrice
+      product.iid = this.iid
+
+      // 将数据添加到 vuex 中
+      console.log(this.$store)
+      this.addCart(product)
+    },
+    // 将 vuex 中的方法调用
+    ...mapActions("cart",['addCart'])
   },
   components: {
     [Swipe.name]: Swipe,
@@ -135,7 +234,9 @@ export default {
     detail,
     detailCommon,
     list,
-    Scroll
+    Scroll,
+    detailBottomBar,
+    BackTop
   }
 }
 </script>
@@ -147,13 +248,16 @@ export default {
       background: #fff;
     }
     .scroll{
-      height: calc(100% - 44px);
+      height: calc(100% - 44px - 49px);
       position: relative;
       left: 0;
       top: 0;
       z-index: 10;
       background: #fff;
       overflow: hidden;
+    }
+    .backTop{
+      z-index: 10;
     }
     .my-swipe .van-swipe-item {
         color: #fff;
