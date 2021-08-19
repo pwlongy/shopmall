@@ -55,7 +55,8 @@ import {mapActions} from "vuex"
 import Scroll from "components/common/scroll/Scroll.vue"
 import {
   Swipe,
-  SwipeItem
+  SwipeItem,
+  Toast
 } from "vant"
 export default {
   name: "Detail",
@@ -220,6 +221,7 @@ export default {
       // 将数据添加到 vuex 中
       console.log(this.$store)
       this.addCart(product)
+      Toast("添加购物车成功")
     },
     // 将 vuex 中的方法调用
     ...mapActions("cart",['addCart'])

@@ -13,7 +13,6 @@ export const itemListerMinxin = {
       if(this.myTime) clearTimeout(this.myTime)
       this.myTime = setTimeout(() =>{
         this.$refs.scroll.scroll.refresh()
-        console.log("混入")
       },200)
     }
 

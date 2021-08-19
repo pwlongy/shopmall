@@ -9,7 +9,7 @@
           align= "center">
           <van-col span="3" class="col">
             <van-cell class="cell">
-              <checked :itemChecked="item.itemChecked"></checked>
+                <van-checkbox v-model="item.itemChecked" @click="changeItemChecked(item)"/>
             </van-cell>
           </van-col>
           <van-col span="21">
@@ -42,7 +42,7 @@
 </template>
 
 <script>
-import {mapActions, mapState} from "vuex"
+import {mapMutations, mapState} from "vuex"
 
 import {
   Button,
@@ -56,7 +56,6 @@ import {
   Checkbox
 } from "vant"
 
-import checked from "./checked.vue"
 export default {
     data () {
       return {
@@ -74,20 +73,27 @@ export default {
       [Row.name]: Row,
       [Col.name]: Col,
       [Checkbox.name]: Checkbox,
-      checked
     },
     computed: {
       ...mapState("cart",["CartList"])
     },
 
     methods: {
-      ...mapActions("cart",[]),
+      ...mapMutations("cart",['updataChecked']),
       // 修改选中属性
-      changeChecked() {
+      changeItemChecked(item) {
+        this.updataChecked(item)
 
+        let x = this.CartList.filter(item => {
+          return item.itemChecked
+        })
+        if(x.length === this.CartList.length){
+          this.$bus.$emit("changChecked",true)
+        }else{
+          this.$bus.$emit("changChecked",false)
+        }
       }
     },
-
 
 }
 </script>

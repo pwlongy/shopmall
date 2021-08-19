@@ -25,7 +25,7 @@
         :autoplay="3000"
         indicator-color="white">
         <van-swipe-item v-for="(item,index) in banner" :key="index">
-          <a :href="item.link"><img :src="item.image" @load="swipeImage"/></a>
+          <a :href="item.link"><img v-lazy="item.image" @load="swipeImage"/></a>
         </van-swipe-item>
       </van-swipe>
 
