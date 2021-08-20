@@ -25,6 +25,13 @@ const cart = {
       //   res.itemChecked = !res.itemChecked
       // }
       payload.itemChecked === payload.itemChecked
+    },
+    updataCount(state,payload){
+      payload.count = payload.count-1
+    },
+    delItemCart(state, payload){
+      let index = state.CartList.indexOf(payload)
+      state.CartList.splice(index, 1)
     }
   },
   actions: {

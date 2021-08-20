@@ -25,18 +25,16 @@
                 <van-tag plain type="danger">标签</van-tag>
               </template>
               <template #footer>
-                <van-button size="mini"><van-icon name="minus" /></van-button>
-                <van-button size="mini"><van-icon name="plus" /></van-button>
+                <van-button size="mini" @click="changecount(-1,item)"><van-icon name="minus" /></van-button>
+                <van-button size="mini" @click="changecount(1,item)"><van-icon name="plus" /></van-button>
               </template>
             </van-card>
-
-            <template #right>
-              <van-button square text="删除" type="danger" class="delete-button" />
-            </template>
-
           </van-col>
         </van-row>
 
+        <template #right>
+          <van-button square text="删除" type="danger" class="delete-button" @click="delCart(item)"/>
+        </template>
     </van-swipe-cell>
   </div>
 </template>
@@ -53,7 +51,9 @@ import {
   Row,
   Col,
   Cell,
-  Checkbox
+  Checkbox,
+  Toast,
+  Dialog
 } from "vant"
 
 export default {
@@ -79,7 +79,7 @@ export default {
     },
 
     methods: {
-      ...mapMutations("cart",['updataChecked']),
+      ...mapMutations("cart",['updataChecked','updataCount','addCount', 'delItemCart']),
       // 修改选中属性
       changeItemChecked(item) {
         this.updataChecked(item)
@@ -92,9 +92,35 @@ export default {
         }else{
           this.$bus.$emit("changChecked",false)
         }
-      }
-    },
+      },
+      // 商品数量的加减
+      changecount(index,item){
+        if(index === -1){
+          if(item.count == 1){
+            Toast("该宝贝不能减少了")
+          }else{
+            this.updataCount(item)
+          }
+        }else if(index === 1){
+            this.addCount(item)
+        }
+      },
+      // 删除商品
+      delCart(item){
+        Dialog.confirm({
+          title: '确认删除',
+          message: '是否删除该商品',
+        })
+          .then(() => {
+            this.delItemCart(item)
+            // on confirm
+          })
+          .catch(() => {
+            // on cancel
+          });
 
+      },
+    }
 }
 </script>
 

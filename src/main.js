@@ -18,10 +18,10 @@ FastClick.attach(document.body)
 Vue.use(VueLazyLoad)
 
 // 提示信息
-import { Toast } from 'vant';
+import { Toast, Dialog} from 'vant';
 
 Vue.use(Toast);
-
+Vue.use(Dialog);
 
 new Vue({
   router,
